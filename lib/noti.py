@@ -1,9 +1,10 @@
 import sqlite3 as sql
 import os
+import re
 from datetime import datetime
 from datetime import timedelta
 
-MAIN_TABLE_PATH = "$HOME/.config/project-noti"
+MAIN_TABLE_PATH = "/home/dion/.config/project-noti/master.sqlite3"
 
 # MAIN DATA STRUCTURE
 # | DATA | TAGS | TIMESTAMP | DURATION | CONFIDENCE |
@@ -35,7 +36,7 @@ def grab_rows(table: str, dbpath: str) -> list:
     connection.close()
     return rows
 
-def create_table(table: str):
+def create_table(table: str) -> None:
     query = f'''
     CREATE TABLE IF NOT EXISTS {table} (
         data TEXT,
@@ -49,3 +50,12 @@ def create_table(table: str):
     cursor = connection.cursor()
     cursor.execute(query)
     connection.close()
+
+def parse_timestamp(timestamp: str) -> datetime:
+    if re.match("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{6}\+00:00", timestamp):
+        timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S.%f+00:00")
+    elif re.match("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\+00:00", timestamp):
+        timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S+00:00")
+    else:
+        raise KeyError
+    return timestamp
