@@ -34,3 +34,18 @@ def grab_rows(table: str, dbpath: str) -> list:
     rows = cursor.fetchall()
     connection.close()
     return rows
+
+def create_table(table: str):
+    query = f'''
+    CREATE TABLE IF NOT EXISTS {table} (
+        data TEXT,
+        tags TEXT,
+        time DATETIME,
+        duration REAL,
+        confidence REAL
+    );
+    '''
+    connection = sql.connect(MAIN_TABLE_PATH)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.close()
