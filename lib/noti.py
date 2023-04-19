@@ -3,8 +3,17 @@ import os
 import re
 from datetime import datetime
 from datetime import timedelta
+import configparser
+config = configparser.ConfigParser()
 
-MAIN_TABLE_PATH = "/home/dion/.config/project-noti/master.sqlite3"
+
+HOME = os.environ['HOME'] + "/"
+CONFIG = HOME + ".config/project-noti/"
+MAIN_TABLE_PATH = CONFIG + "master.sqlite3"
+CONFIG_PATH = CONFIG + "conf.ini"
+
+config.read(CONFIG_PATH)
+
 
 # MAIN DATA STRUCTURE
 # | DATA | TAGS | TIMESTAMP | DURATION | CONFIDENCE |
@@ -44,13 +53,22 @@ def create_table(table: str) -> None:
     '''
     cursor.execute(query)
 
-def parse_timestamp(timestamp: str) -> datetime:
+def parse_timestamp(timestamp: str, zonecor: int = 0) -> datetime:
     try:
         timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S.%f+00:00")
     except:
         timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S+00:00")
     
-    return timestamp
+    return timestamp + timedelta(hours=zonecor)
 
 def format_timestamp(timestamp: datetime) -> str:
     return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")+"+00:00"
+
+def get_config(section: str, value: str) -> str:
+    return config[section][value]
+
+def set_config(section: str, value: str, var: str) -> None:
+    config[section][value] = var
+    with open(CONFIG_PATH, "w") as cf:
+        config.write(cf)
+
