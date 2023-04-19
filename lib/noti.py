@@ -12,21 +12,17 @@ MAIN_TABLE_PATH = "/home/dion/.config/project-noti/master.sqlite3"
 # | TEXT | TEXT | TIMESTAMP |   REAL   |    REAL    |
 #          YYYY-MM-DD hh:mm:ss.uuuuu
 
-def write(data: str, timestamp: datetime, duration: int, table: str, confidence=1.0, tags="") -> None:
+connection = sql.connect(MAIN_TABLE_PATH, isolation_level=None)
+cursor = connection.cursor()
+
+def write(data: str, timestamp: datetime, duration: float, table: str, confidence=1.0, tags="") -> None:
     timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
-    query = f'''
-        INSERT INTO {table} VALUES ("{data}", "{tags}", "{timestamp}", "{duration}", "{confidence}");
-        '''
-    connection = sql.connect(MAIN_TABLE_PATH)
-    cursor = connection.cursor()
+    query = f"INSERT INTO {table} VALUES ('{data}', '{tags}', '{timestamp}', {duration}, {confidence});"
+    
     cursor.execute(query)
-    connection.close()
 
 def reset_table(table: str) -> None:
-    connection = sql.connect(MAIN_TABLE_PATH)
-    cursor = connection.cursor()
     cursor.execute(f"DROP TABLE {table};")
-    connection.close()
 
 def grab_rows(table: str, dbpath: str) -> list:
     connection = sql.connect(dbpath)
@@ -46,16 +42,15 @@ def create_table(table: str) -> None:
         confidence REAL
     );
     '''
-    connection = sql.connect(MAIN_TABLE_PATH)
-    cursor = connection.cursor()
     cursor.execute(query)
-    connection.close()
 
 def parse_timestamp(timestamp: str) -> datetime:
-    if re.match("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{6}\+00:00", timestamp):
+    try:
         timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S.%f+00:00")
-    elif re.match("\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\+00:00", timestamp):
+    except:
         timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S+00:00")
-    else:
-        raise KeyError
+    
     return timestamp
+
+def format_timestamp(timestamp: datetime) -> str:
+    return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")+"+00:00"
