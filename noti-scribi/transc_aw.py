@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 from datetime import datetime
 from datetime import timedelta
 from tqdm import tqdm
@@ -23,6 +24,8 @@ noti.create_table("aw")
 last_updated = noti.parse_timestamp(noti.get_config("aw", "last_updated"))
 print("last updated:", last_updated)
 total_data = []
+
+category_regex = noti.get_config("regex")
 
 # afk data loop
 afk_periods = []
@@ -81,13 +84,28 @@ for event in tqdm(AW_DATA):
             total_data.append([data, event_start, true_duration])
             break
 
+
 for data, timestamp, duration in tqdm(total_data):
-    noti.write(
-        data,
-        timestamp,
-        duration,
-        "aw"
-    )
+    category_set = False
+    for (key, val) in category_regex:
+        if re.match(val, data, re.IGNORECASE):
+            noti.write(
+                data,
+                timestamp,
+                duration,
+                "aw",
+                tags=key
+            )
+            category_set = True
+            break
+    if not category_set:
+        noti.write(
+            data,
+            timestamp,
+            duration,
+            "aw",
+            tags="uncategorised"
+        )
 try:
     noti.set_config(
         "aw",

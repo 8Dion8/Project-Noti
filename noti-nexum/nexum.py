@@ -45,7 +45,7 @@ def get_data_today():
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp
     )
-    return jsonify({"data":AW_DATA})
+    return jsonify(noti.format_for_apexcharts(AW_DATA))
 
 
 

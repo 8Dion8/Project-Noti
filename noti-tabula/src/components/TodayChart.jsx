@@ -1,5 +1,6 @@
 import { createStore } from "solid-js/store";
 import { SolidApexCharts } from "solid-apexcharts";
+import { createSignal } from "solid-js";
 
 function TodayChart() {
     const [options] = createStore({
@@ -19,18 +20,34 @@ function TodayChart() {
         },
     });
 
+    const [data, setData] = createSignal(0);
+
     const apiGetData = () => {
         fetch("http://127.0.0.1:5000/today")
             .then((response) => response.json())
             .then((json) => {
-                console.log(json);
+                console.log(json)
+                setSeries(json);
             });
     };
 
-    apiGetData()
 
-    const [series] = createStore({
+
+    const [series, setSeries] = createStore({
         list: [
+            {
+                name: "csgo",
+                data: [
+
+                    {
+                        x: "Leisure",
+                        y: [
+                            new Date(2023, 4, 21, 0, 15, 28, 781).getTime(),
+                            new Date(2023, 4, 21, 0, 17, 28, 781).getTime(),
+                        ],
+                    },
+                ],
+            },
             {
                 name: "csgo",
                 data: [
@@ -42,13 +59,6 @@ function TodayChart() {
                         ],
                     },
 
-                    {
-                        x: "Leisure",
-                        y: [
-                            new Date(2023, 4, 21, 0, 15, 28, 781).getTime(),
-                            new Date(2023, 4, 21, 0, 17, 28, 781).getTime(),
-                        ],
-                    },
                 ],
             },
             {
@@ -65,6 +75,11 @@ function TodayChart() {
             },
         ],
     });
+
+    apiGetData()
+
+
+
 
     return <SolidApexCharts options={options} series={series.list} />;
 }
