@@ -1,5 +1,6 @@
 import json, sys, os
 from flask import Flask, jsonify
+from flask_cors import CORS, cross_origin
 from datetime import datetime
 from datetime import timedelta
 
@@ -14,15 +15,18 @@ loader.exec_module(noti)
 
 
 app = Flask(__name__)
-
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route('/')
+@cross_origin()
 def index():
     return jsonify({
         "ping": "pong!"
     })
 
 @app.route('/today')
+@cross_origin()
 def get_data_today():
     today = datetime.now()
     start_timestamp = noti.format_timestamp(datetime(
