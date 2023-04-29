@@ -7,7 +7,7 @@ from tqdm import tqdm
 import importlib.machinery
 import importlib.util
 loader = importlib.machinery.SourceFileLoader(
-    "noti", sys.path[0] + "/../lib/noti.py")
+    "noti", sys.path[0] + "/../noti-bibli/noti.py")
 spec = importlib.util.spec_from_loader("noti", loader)
 noti = importlib.util.module_from_spec(spec)
 loader.exec_module(noti)
