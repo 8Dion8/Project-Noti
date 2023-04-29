@@ -33,10 +33,16 @@ def write(data: str, timestamp: datetime, duration: float, table: str, confidenc
 def reset_table(table: str) -> None:
     cursor.execute(f"DROP TABLE {table};")
 
-def grab_rows(table: str, dbpath: str) -> list:
+def grab_rows(
+    table: str, 
+    dbpath: str, 
+    start_timestamp="2022-12-31 23:59:59.999999", 
+    end_timestamp="2052-01-01 00:00:00.000000", 
+    db_time_column="timestamp") -> list:
+
     connection = sql.connect(dbpath)
     cursor = connection.cursor()
-    cursor.execute(f"SELECT * FROM {table}")
+    cursor.execute(f"SELECT * FROM {table} WHERE {db_time_column} BETWEEN '{start_timestamp}' AND '{end_timestamp}';")
     rows = cursor.fetchall()
     connection.close()
     return rows
@@ -46,7 +52,7 @@ def create_table(table: str) -> None:
     CREATE TABLE IF NOT EXISTS {table} (
         data TEXT,
         tags TEXT,
-        time DATETIME,
+        timestamp DATETIME,
         duration REAL,
         confidence REAL
     );

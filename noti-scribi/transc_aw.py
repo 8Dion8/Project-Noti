@@ -21,7 +21,7 @@ AW_DATA = sorted(AW_DATA, key=lambda k: k[2])
 noti.create_table("aw")
 
 last_updated = noti.parse_timestamp(noti.get_config("aw", "last_updated"))
-
+print("last updated:", last_updated)
 total_data = []
 
 # afk data loop
@@ -44,6 +44,8 @@ for event in tqdm(AW_DATA):
         else:
             afk_periods.append([start, end])
 
+if not len(afk_periods):
+    afk_periods.append([last_updated, datetime.now()])
 
 for event in tqdm(AW_DATA):
 
