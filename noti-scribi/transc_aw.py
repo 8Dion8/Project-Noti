@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from datetime import timedelta
 from tqdm import tqdm
+from unicodedata import normalize
 
 import importlib.machinery
 import importlib.util
@@ -26,6 +27,8 @@ print("last updated:", last_updated)
 total_data = []
 
 category_regex = noti.get_config("regex")
+
+never_afk_reg = re.compile(noti.get_config("aw", "never_afk_reg"))
 
 # afk data loop
 afk_periods = []
@@ -72,6 +75,13 @@ for event in tqdm(AW_DATA):
             true_duration = true_end - event_start
             true_duration = true_duration.total_seconds()
             data = eval(event[4])["app"]
+
+            #            if data == "firefox":
+            #   data += ": " + eval(event[4])["title"]
+
+            #data = data.replace("'", "")
+
+            #data = normalize("NFKD", data)#.encode('ascii', 'ignore')
 
             if len(total_data):
                 last_event = total_data[-1]

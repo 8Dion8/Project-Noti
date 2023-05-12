@@ -110,7 +110,8 @@ def format_for_apexcharts(data) -> dict:
                     "y": [
                         start,
                         start + (row[3]*1000)
-                    ]
+                    ],
+                    "fillColor": get_config("colors", row[1])
 
                 }
             )
@@ -124,7 +125,8 @@ def format_for_apexcharts(data) -> dict:
                         "y": [
                             start,
                             start + (row[3]*1000)
-                        ]
+                        ],
+                        "fillColor": get_config("colors", row[1])
                     }]
                 }
             )

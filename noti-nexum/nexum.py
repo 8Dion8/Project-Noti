@@ -25,9 +25,9 @@ def index():
         "ping": "pong!"
     })
 
-@app.route('/today')
+@app.route('/today/timeline')
 @cross_origin()
-def get_data_today():
+def get_timeline_today(_format=True):
     today = datetime.now()
     start_timestamp = noti.format_timestamp(datetime(
         today.year,
@@ -45,8 +45,47 @@ def get_data_today():
         start_timestamp=start_timestamp,
         end_timestamp=end_timestamp
     )
-    return jsonify(noti.format_for_apexcharts(AW_DATA))
+    if _format:
+        return jsonify(noti.format_for_apexcharts(AW_DATA))
+    else:
+        return AW_DATA
 
+@app.route('/today/pie')
+@cross_origin()
+def get_pie_today():
+    today = datetime.now()
+    start_timestamp = noti.format_timestamp(datetime(
+        today.year,
+        today.month,
+        today.day
+    )-timedelta(microseconds=1))
+    end_timestamp = noti.format_timestamp(datetime(
+        today.year,
+        today.month,
+        today.day
+    )+timedelta(days=1))
+    data = noti.grab_rows(
+        "aw", 
+        noti.MAIN_TABLE_PATH,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp
+    )
+
+    labels = ["study", "hobby", "social", "media", "leisure", "waste", "uncategorised"]
+
+    formatted = {
+        "series": [0, 0, 0, 0, 0, 0, 0]
+    }
+
+    for row in data:
+        tag = row[1]
+        duration = row[3]
+        
+        tag_index = labels.index(tag)
+
+        formatted["series"][tag_index] += duration
+
+    return jsonify(formatted)
 
 
 app.run()
