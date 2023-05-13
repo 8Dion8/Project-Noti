@@ -1,7 +1,7 @@
 import sys
 import os
 import re
-from datetime import datetime
+from datetime import datetime, time
 from datetime import timedelta
 from tqdm import tqdm
 from unicodedata import normalize
@@ -87,11 +87,15 @@ for event in tqdm(AW_DATA):
 
             if len(total_data):
                 last_event = total_data[-1]
-                if last_event[0] == data and event_start - last_event[1] - timedelta(seconds=last_event[2]) < timedelta(seconds=10):
-                    dif = true_end - \
-                        (last_event[1]+timedelta(seconds=last_event[2]))
-                    total_data[-1][2] = last_event[2] + dif.total_seconds()
-                    continue
+                
+                if event_start - last_event[1] - timedelta(seconds=last_event[2]) < timedelta(seconds=10):
+                    if last_event[0] == data:
+                        dif = true_end - \
+                            (last_event[1]+timedelta(seconds=last_event[2]))
+                        total_data[-1][2] = last_event[2] + dif.total_seconds()
+                        continue
+                    else:
+                        event_start = last_event[1] + timedelta(seconds=last_event[2]) + timedelta(microseconds=1) 
 
             total_data.append([data, event_start, true_duration])
             break
@@ -100,7 +104,7 @@ for event in tqdm(AW_DATA):
 for data, timestamp, duration in tqdm(total_data):
     category_set = False
     for (key, val) in category_regex:
-        if re.match(val, data, re.IGNORECASE):
+        if re.search(val, data.lower(), re.IGNORECASE):
             try:
                 noti.write(
                     data,
