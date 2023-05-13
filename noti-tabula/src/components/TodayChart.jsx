@@ -5,10 +5,10 @@ function TodayChart() {
   const [options] = createStore({
     chart: {
       type: "rangeBar",
-      height: document.body.scrollHeight / 2,
-      width: document.body.clientWidth / 3 * 2 * 0.7,
-      background: "#30302b",
-      foreColor: "#dedbc4",
+      background: "#3c3836",
+      foreColor: "#ebdbb2",
+      width: "100%",
+      height: "500px"
     },
     plotOptions: {
       bar: {

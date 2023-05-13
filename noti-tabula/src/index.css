@@ -5,9 +5,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #32302f;
 }
 
 code {
   font-family: Fira Code,source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+

@@ -1,6 +1,5 @@
 /* @refresh reload */
 import { render } from 'solid-js/web';
-import { HopeProvider } from '@hope-ui/solid';
 
 import './index.css';
 import App from './App';
@@ -15,9 +14,7 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 
 function MainApp() {
   return (
-    <HopeProvider>
-      <App />
-    </HopeProvider>
+    <App />
   )
 }
 

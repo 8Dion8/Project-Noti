@@ -14,7 +14,6 @@
     "vite-plugin-solid": "^2.5.0"
   },
   "dependencies": {
-    "@hope-ui/solid": "^0.6.7",
     "@stitches/core": "^1.2.8",
     "apexcharts": "^3.39.0",
     "solid-apexcharts": "^0.2.4",
