@@ -87,5 +87,76 @@ def get_pie_today():
 
     return jsonify(formatted)
 
+@app.route('/week/area')
+@cross_origin()
+def get_grid_week():
+    today = datetime.now()
+    start_timestamp = noti.format_timestamp(datetime(
+        today.year,
+        today.month,
+        today.day
+    )-timedelta(days=6))
+    end_timestamp = noti.format_timestamp(datetime(
+        today.year,
+        today.month,
+        today.day
+    )+timedelta(days=1))
+    data = noti.grab_rows(
+        "aw", 
+        noti.MAIN_TABLE_PATH,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp
+    )
+   
+
+    labels = ["study", "hobby", "social", "media", "leisure", "waste", "uncategorised"]
+
+    formatted = {
+        "series": [
+            {
+                "name": "study",
+                "data": [0,0,0,0,0,0,0]
+            },
+            {
+                "name": "hobby",
+                "data": [0,0,0,0,0,0,0]
+            },
+            {
+                "name": "social",
+                "data": [0,0,0,0,0,0,0]
+            },
+            {
+                "name": "media",
+                "data": [0,0,0,0,0,0,0]
+            },
+            {
+                "name": "leisure",
+                "data": [0,0,0,0,0,0,0]
+            },
+            {
+                "name": "waste",
+                "data": [0,0,0,0,0,0,0]
+            },
+            {
+                "name": "uncategorised",
+                "data": [0,0,0,0,0,0,0]
+            }]
+    }
+
+    for row in data:
+        tag_index = labels.index(row[1])
+        timestamp = noti.parse_timestamp(row[2])
+        day_index = (timestamp - noti.parse_timestamp(start_timestamp)).days
+        formatted["series"][tag_index]["data"][day_index] += row[3]
+    
+    for i in range(len(formatted["series"])):
+        for j in range(7):
+            formatted["series"][i]["data"][j] = round(formatted["series"][i]["data"][j] / 60)
+
+    return jsonify(formatted)
+        
+    
+
+
 
 app.run()

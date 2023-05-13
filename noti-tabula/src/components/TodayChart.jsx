@@ -6,7 +6,7 @@ function TodayChart() {
     chart: {
       type: "rangeBar",
       height: document.body.scrollHeight / 2,
-      width: document.body.clientWidth,
+      width: document.body.clientWidth / 3 * 2 * 0.7,
       background: "#30302b",
       foreColor: "#dedbc4",
     },
@@ -19,6 +19,9 @@ function TodayChart() {
     xaxis: {
       type: "datetime",
     },
+    legend: {
+      show: false
+    }
   });
 
   const apiGetData = () => {

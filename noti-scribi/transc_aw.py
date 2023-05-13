@@ -6,6 +6,8 @@ from datetime import timedelta
 from tqdm import tqdm
 from unicodedata import normalize
 
+from sqlite3 import Warning
+
 import importlib.machinery
 import importlib.util
 loader = importlib.machinery.SourceFileLoader(
@@ -76,11 +78,11 @@ for event in tqdm(AW_DATA):
             true_duration = true_duration.total_seconds()
             data = eval(event[4])["app"]
 
-            #            if data == "firefox":
-            #   data += ": " + eval(event[4])["title"]
+            if data == "firefox":
+               data += ": " + eval(event[4])["title"]
 
-            #data = data.replace("'", "")
-
+            data = data.replace("'", "")
+            data = data.encode('utf-8','ignore').decode("utf-8")
             #data = normalize("NFKD", data)#.encode('ascii', 'ignore')
 
             if len(total_data):
@@ -99,23 +101,31 @@ for data, timestamp, duration in tqdm(total_data):
     category_set = False
     for (key, val) in category_regex:
         if re.match(val, data, re.IGNORECASE):
+            try:
+                noti.write(
+                    data,
+                    timestamp,
+                    duration,
+                    "aw",
+                    tags=key
+                )
+            except Warning:
+                print(data)
+                exit(1)
+            category_set = True
+            break
+    if not category_set:
+        try:
             noti.write(
                 data,
                 timestamp,
                 duration,
                 "aw",
-                tags=key
+                tags="uncategorised"
             )
-            category_set = True
-            break
-    if not category_set:
-        noti.write(
-            data,
-            timestamp,
-            duration,
-            "aw",
-            tags="uncategorised"
-        )
+        except Warning:
+            print(data)
+            exit(1)
 try:
     noti.set_config(
         "aw",
