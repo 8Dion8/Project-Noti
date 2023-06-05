@@ -23,8 +23,7 @@ function TodayPie() {
       type: "pie",
       background: "#3c3836",
       foreColor: "#ebdbb2",
-      width: "100%",
-      height: "300px"
+      height: "400rem"
     },
     labels: [
       "study",

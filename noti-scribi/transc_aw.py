@@ -71,20 +71,24 @@ for event in tqdm(AW_DATA):
         continue
     event_end = event_start + timedelta(seconds=duration)
 
+    data = eval(event[4])["app"]
+
+    if data == "firefox":
+        data += ": " + eval(event[4])["title"]
+
+        data = data.replace("'", "")
+        data = data.encode('utf-8','ignore').decode("utf-8")
+
+    if never_afk_reg.search(data.lower()):
+        total_data.append([data, event_start, duration])
+        continue
+
     for afk_start, afk_end in afk_periods:
         if afk_start <= event_start < afk_end:
             true_end = min(afk_end, event_end)
             true_duration = true_end - event_start
             true_duration = true_duration.total_seconds()
-            data = eval(event[4])["app"]
-
-            if data == "firefox":
-               data += ": " + eval(event[4])["title"]
-
-            data = data.replace("'", "")
-            data = data.encode('utf-8','ignore').decode("utf-8")
-            #data = normalize("NFKD", data)#.encode('ascii', 'ignore')
-
+            
             if len(total_data):
                 last_event = total_data[-1]
                 

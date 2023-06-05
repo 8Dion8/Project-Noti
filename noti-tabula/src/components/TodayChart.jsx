@@ -7,8 +7,7 @@ function TodayChart() {
       type: "rangeBar",
       background: "#3c3836",
       foreColor: "#ebdbb2",
-      width: "100%",
-      height: "500px"
+      height: "400rem"
     },
     plotOptions: {
       bar: {
