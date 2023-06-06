@@ -17,127 +17,133 @@ noti = importlib.util.module_from_spec(spec)
 loader.exec_module(noti)
 
 
-AW_DB_PATH = os.environ['HOME'] + \
-    "/.local/share/activitywatch/aw-server/peewee-sqlite.v2.db"
-AW_DATA = noti.grab_rows("eventmodel", AW_DB_PATH)
-AW_DATA = sorted(AW_DATA, key=lambda k: k[2])
+def main():
 
-noti.create_table("aw")
+    AW_DB_PATH = os.environ['HOME'] + \
+        "/.local/share/activitywatch/aw-server/peewee-sqlite.v2.db"
+    AW_DATA = noti.grab_rows("eventmodel", AW_DB_PATH)
+    AW_DATA = sorted(AW_DATA, key=lambda k: k[2])
 
-last_updated = noti.parse_timestamp(noti.get_config("aw", "last_updated"))
-print("last updated:", last_updated)
-total_data = []
+    noti.create_table("aw")
 
-category_regex = noti.get_config("regex")
+    last_updated = noti.parse_timestamp(noti.get_config("aw", "last_updated"))
+    print("last updated:", last_updated)
+    total_data = []
 
-never_afk_reg = re.compile(noti.get_config("aw", "never_afk_reg"))
+    category_regex = noti.get_config("regex")
 
-# afk data loop
-afk_periods = []
-for event in tqdm(AW_DATA):
-    aw_watcher_num = event[1]
-    if aw_watcher_num != 2:
-        continue
-    timestamp = event[2]
-    start = noti.parse_timestamp(timestamp, 3)
-    if start < last_updated:
-        continue
-    duration = event[3]
-    data = event[4]
-    if "not" in data:
-        end = start + timedelta(seconds=duration)
+    never_afk_reg = re.compile(noti.get_config("aw", "never_afk_reg"))
 
-        if len(afk_periods) and afk_periods[-1][1] >= start and afk_periods[-1][1] < end:
-            afk_periods[-1][1] = end
-        else:
-            afk_periods.append([start, end])
+    # afk data loop
+    afk_periods = []
+    for event in tqdm(AW_DATA):
+        aw_watcher_num = event[1]
+        if aw_watcher_num != 2:
+            continue
+        timestamp = event[2]
+        start = noti.parse_timestamp(timestamp, 3)
+        if start < last_updated:
+            continue
+        duration = event[3]
+        data = event[4]
+        if "not" in data:
+            end = start + timedelta(seconds=duration)
 
-if not len(afk_periods):
-    afk_periods.append([last_updated, datetime.now()])
+            if len(afk_periods) and afk_periods[-1][1] >= start and afk_periods[-1][1] < end:
+                afk_periods[-1][1] = end
+            else:
+                afk_periods.append([start, end])
 
-for event in tqdm(AW_DATA):
+    if not len(afk_periods):
+        afk_periods.append([last_updated, datetime.now()])
 
-    aw_watcher_num = event[1]
-    if aw_watcher_num != 1:
-        continue
+    for event in tqdm(AW_DATA):
 
-    duration = event[3]
-    if not duration:
-        continue
+        aw_watcher_num = event[1]
+        if aw_watcher_num != 1:
+            continue
 
-    timestamp = event[2]
-    event_start = noti.parse_timestamp(timestamp, 3)
-    if event_start < last_updated:
-        continue
-    event_end = event_start + timedelta(seconds=duration)
+        duration = event[3]
+        if not duration:
+            continue
 
-    data = eval(event[4])["app"]
+        timestamp = event[2]
+        event_start = noti.parse_timestamp(timestamp, 3)
+        if event_start < last_updated:
+            continue
+        event_end = event_start + timedelta(seconds=duration)
 
-    if data == "firefox":
-        data += ": " + eval(event[4])["title"]
+        data = eval(event[4])["app"]
 
-        data = data.replace("'", "")
-        data = data.encode('utf-8','ignore').decode("utf-8")
+        if data == "firefox":
+            data += ": " + eval(event[4])["title"]
 
-    if never_afk_reg.search(data.lower()):
-        total_data.append([data, event_start, duration])
-        continue
+            data = data.replace("'", "")
+            data = data.encode('utf-8','ignore').decode("utf-8")
 
-    for afk_start, afk_end in afk_periods:
-        if afk_start <= event_start < afk_end:
-            true_end = min(afk_end, event_end)
-            true_duration = true_end - event_start
-            true_duration = true_duration.total_seconds()
-            
-            if len(total_data):
-                last_event = total_data[-1]
+        if never_afk_reg.search(data.lower()):
+            total_data.append([data, event_start, duration])
+            continue
+
+        for afk_start, afk_end in afk_periods:
+            if afk_start <= event_start < afk_end:
+                true_end = min(afk_end, event_end)
+                true_duration = true_end - event_start
+                true_duration = true_duration.total_seconds()
                 
-                if event_start - last_event[1] - timedelta(seconds=last_event[2]) < timedelta(seconds=10):
-                    if last_event[0] == data:
-                        dif = true_end - \
-                            (last_event[1]+timedelta(seconds=last_event[2]))
-                        total_data[-1][2] = last_event[2] + dif.total_seconds()
-                        continue
-                    else:
-                        event_start = last_event[1] + timedelta(seconds=last_event[2]) + timedelta(microseconds=1) 
+                if len(total_data):
+                    last_event = total_data[-1]
+                    
+                    if event_start - last_event[1] - timedelta(seconds=last_event[2]) < timedelta(seconds=10):
+                        if last_event[0] == data:
+                            dif = true_end - \
+                                (last_event[1]+timedelta(seconds=last_event[2]))
+                            total_data[-1][2] = last_event[2] + dif.total_seconds()
+                            continue
+                        else:
+                            event_start = last_event[1] + timedelta(seconds=last_event[2]) + timedelta(microseconds=1) 
 
-            total_data.append([data, event_start, true_duration])
-            break
+                total_data.append([data, event_start, true_duration])
+                break
 
 
-for data, timestamp, duration in tqdm(total_data):
-    category_set = False
-    for (key, val) in category_regex:
-        if re.search(val, data.lower(), re.IGNORECASE):
+    for data, timestamp, duration in tqdm(total_data):
+        category_set = False
+        for (key, val) in category_regex:
+            if re.search(val, data.lower(), re.IGNORECASE):
+                try:
+                    noti.write(
+                        data,
+                        timestamp,
+                        duration,
+                        "aw",
+                        tags=key
+                    )
+                except Warning:
+                    print(data)
+                    exit(1)
+                category_set = True
+                break
+        if not category_set:
             try:
                 noti.write(
                     data,
                     timestamp,
                     duration,
                     "aw",
-                    tags=key
+                    tags="uncategorised"
                 )
             except Warning:
                 print(data)
                 exit(1)
-            category_set = True
-            break
-    if not category_set:
-        try:
-            noti.write(
-                data,
-                timestamp,
-                duration,
-                "aw",
-                tags="uncategorised"
-            )
-        except Warning:
-            print(data)
-            exit(1)
-try:
-    noti.set_config(
-        "aw",
-        "last_updated",
-        noti.format_timestamp(total_data[-1][1])
-    )
-except: pass
+    try:
+        noti.set_config(
+            "aw",
+            "last_updated",
+            noti.format_timestamp(total_data[-1][1])
+        )
+    except: pass
+
+
+if __name__ == "__main__":
+    main()

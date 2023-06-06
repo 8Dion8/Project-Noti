@@ -74,7 +74,32 @@ def get_pie_today():
     labels = ["study", "hobby", "social", "media", "leisure", "waste", "uncategorised"]
 
     formatted = {
-        "series": [0, 0, 0, 0, 0, 0, 0]
+        "series": [{
+            "data": [
+                {
+                    "name": "Study",
+                    "y": 0
+                },{
+                    "name": "Hobby",
+                    "y": 0
+                },{
+                    "name": "Social",
+                    "y": 0
+                },{
+                    "name": "Media",
+                    "y": 0
+                },{
+                    "name": "Leisure",
+                    "y": 0
+                },{
+                    "name": "Waste",
+                    "y": 0
+                },{
+                    "name": "Uncategorised",
+                    "y": 0
+                }
+            ]
+        }]
     }
 
     for row in data:
@@ -83,13 +108,13 @@ def get_pie_today():
         
         tag_index = labels.index(tag)
 
-        formatted["series"][tag_index] += duration
+        formatted["series"][0]["data"][tag_index]["y"] += duration
 
     return jsonify(formatted)
 
-@app.route('/week/area')
+@app.route('/week/column')
 @cross_origin()
-def get_grid_week():
+def get_grid_column():
     today = datetime.now()
     start_timestamp = noti.format_timestamp(datetime(
         today.year,
@@ -155,7 +180,20 @@ def get_grid_week():
 
     return jsonify(formatted)
         
-    
+
+@app.route("/update")
+@cross_origin()
+def update():
+    loader_scribi = importlib.machinery.SourceFileLoader(
+    "noti", sys.path[0] + "/../noti-scribi/transc_aw.py")
+    spec_scribi = importlib.util.spec_from_loader("noti", loader_scribi)
+    noti_scribi = importlib.util.module_from_spec(spec_scribi)
+    loader_scribi.exec_module(noti_scribi)
+
+    noti_scribi.main()
+
+    return jsonify({"status": 1})
+
 
 
 
