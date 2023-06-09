@@ -1,9 +1,9 @@
 import json, sys, os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from datetime import datetime
 from datetime import timedelta
-
+import numpy as np
 import importlib.machinery
 import importlib.util
 loader = importlib.machinery.SourceFileLoader(
@@ -110,17 +110,81 @@ def get_pie_today():
 
         formatted["series"][0]["data"][tag_index]["y"] += duration
 
+    
+    for i in formatted["series"][0]["data"]:
+        if i["y"] < 10:
+            i["y"] = None
+        else:
+            i["y"] = round(i["y"] / 6) /10
+
+    
+
     return jsonify(formatted)
 
-@app.route('/week/column')
+@app.route('/today/heat')
 @cross_origin()
-def get_grid_column():
+def get_heat_today():
     today = datetime.now()
     start_timestamp = noti.format_timestamp(datetime(
         today.year,
         today.month,
         today.day
-    )-timedelta(days=6))
+    )-timedelta(microseconds=1))
+    end_timestamp = noti.format_timestamp(datetime(
+        today.year,
+        today.month,
+        today.day
+    )+timedelta(days=1))
+    data = noti.grab_rows(
+        "aw", 
+        noti.MAIN_TABLE_PATH,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp
+    )
+
+    labels = ["study", "hobby", "social", "media", "leisure", "waste", "uncategorised"]
+
+    unf = list(np.zeros((len(labels), 24*6)))
+
+    formatted = []
+
+    for row in data:
+        tag = row[1]
+        duration = row[3]
+        tag_index = labels.index(tag)
+        timestamp = noti.parse_timestamp(row[2])
+        time_index = timestamp.hour * 6 + timestamp.minute // 10
+
+        while True:
+            s = unf[tag_index][time_index]
+            if duration + s > 600:
+                unf[tag_index][time_index] = 600
+                duration -= 600 - s
+                time_index += 1
+            else:
+                unf[tag_index][time_index] += duration
+                break
+
+    for i in range(len(labels)):
+        for j in range(24*6):
+            formatted.append([j, i, unf[i][j] / 600])
+
+    return jsonify({"series": formatted})
+        
+
+
+@app.route('/last/column')
+@cross_origin()
+def get_grid_column():
+
+    last_n = int(request.args["n"])
+
+    today = datetime.now()
+    start_timestamp = noti.format_timestamp(datetime(
+        today.year,
+        today.month,
+        today.day
+    )-timedelta(days=last_n-1))
     end_timestamp = noti.format_timestamp(datetime(
         today.year,
         today.month,
@@ -140,31 +204,38 @@ def get_grid_column():
         "series": [
             {
                 "name": "study",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             },
             {
                 "name": "hobby",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             },
             {
                 "name": "social",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             },
             {
                 "name": "media",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             },
             {
                 "name": "leisure",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             },
             {
                 "name": "waste",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             },
             {
                 "name": "uncategorised",
-                "data": [0,0,0,0,0,0,0]
+                "data": list(np.zeros(last_n)),
+                "type": "column"
             }]
     }
 
@@ -175,8 +246,8 @@ def get_grid_column():
         formatted["series"][tag_index]["data"][day_index] += row[3]
     
     for i in range(len(formatted["series"])):
-        for j in range(7):
-            formatted["series"][i]["data"][j] = round(formatted["series"][i]["data"][j] / 60)
+        for j in range(last_n):
+            formatted["series"][i]["data"][j] = round(formatted["series"][i]["data"][j] / 6) /10
 
     return jsonify(formatted)
         

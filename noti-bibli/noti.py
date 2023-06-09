@@ -77,8 +77,11 @@ def parse_timestamp(timestamp: str, zonecor: int = 0) -> datetime:
     return timestamp + timedelta(hours=zonecor)
 
 
-def format_timestamp(timestamp: datetime) -> str:
-    return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")+"+00:00"
+def format_timestamp(timestamp: datetime, simple: bool = False) -> str:
+    if simple:
+        return timestamp.strftime("%Y-%m-%d")
+    else:
+        return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")+"+00:00"
 
 
 def get_config(section: str, value="") -> str:
