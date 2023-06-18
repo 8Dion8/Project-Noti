@@ -21,7 +21,14 @@ def main():
 
     AW_DB_PATH = os.environ['HOME'] + \
         "/.local/share/activitywatch/aw-server/peewee-sqlite.v2.db"
+    AW_DB_WIN_PATH = "/win_hdd/Users/Dion/AppData/Local/activitywatch/activitywatch/aw-server/peewee-sqlite.v2.db"
+    
+    AW_WIN_DATA = noti.grab_rows("eventmodel", AW_DB_WIN_PATH)
+    for row in AW_WIN_DATA:
+        row[2] = noti.format_timestamp(noti.parse_timestamp(row[2], 3))
+
     AW_DATA = noti.grab_rows("eventmodel", AW_DB_PATH)
+    AW_DATA.extend(AW_WIN_DATA)
     AW_DATA = sorted(AW_DATA, key=lambda k: k[2])
 
     noti.create_table("aw")
@@ -38,7 +45,7 @@ def main():
     afk_periods = []
     for event in tqdm(AW_DATA):
         aw_watcher_num = event[1]
-        if aw_watcher_num != 2:
+        if aw_watcher_num not in [2, 13]:
             continue
         timestamp = event[2]
         start = noti.parse_timestamp(timestamp, 3)
@@ -54,13 +61,13 @@ def main():
             else:
                 afk_periods.append([start, end])
 
+
     if not len(afk_periods):
         afk_periods.append([last_updated, datetime.now()])
 
     for event in tqdm(AW_DATA):
-
         aw_watcher_num = event[1]
-        if aw_watcher_num != 1:
+        if aw_watcher_num not in [1, 12]:
             continue
 
         duration = event[3]

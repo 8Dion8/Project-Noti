@@ -31,14 +31,18 @@ ui.colors(
 )
 
 def update():
-    ui.notify("Updating...")
+    cur_period = period_toggle.value.lower()
+    ui.notify(f"Updating for current {cur_period}...")
     requests.get("http://127.0.0.1:5000/update")
-    week_column_chart.options["series"] = requests.get(f"http://127.0.0.1:5000/last/column?n={n}").json()["series"]
-    week_column_chart.update()
-    today_pie_chart.options["series"] = requests.get("http://127.0.0.1:5000/today/pie").json()["series"]
-    today_pie_chart.update()
-    today_heat_chart.options["series"][0]["data"] = requests.get("http://127.0.0.1:5000/today/heat").json()["series"]
-    today_heat_chart.update()
+
+    chart00.options["series"] = requests.get(f"http://127.0.0.1:5000/{cur_period}/last_columns?n={n}").json()["series"]
+    chart00.update()
+    chart10.options["series"] = requests.get(f"http://127.0.0.1:5000/{cur_period}/pie").json()["series"]
+    chart10.update()
+    chart11.options["series"][0]["data"] = requests.get(f"http://127.0.0.1:5000/{cur_period}/timeline").json()["series"]
+    chart11.options["yAxis"]["categories"] = requests.get(f"http://127.0.0.1:5000/{cur_period}/timeline/y").json()
+    chart11.update()
+    
 
     ui.notify("Success!")
 
@@ -72,16 +76,16 @@ with ui.row() as header_row:
 
 with ui.row() as opts_row:
     ui.button("<", color="#3f5865").props("unelevated").classes("h-8")
-    ui.toggle(["Day", "Week", "Month"], value="Day").props("unelevated color=dark text-color=d3c6aa").classes("max-h-8")
+    period_toggle = ui.toggle(["Day", "Week", "Month"], value="Day", on_change=update).props("unelevated color=dark text-color=d3c6aa").classes("max-h-8")
     ui.button(">", color="#3f5865").props("unelevated").classes("h-8")
 
     ui.button("Update", on_click=update, color="#3f5865").props("unelevated").classes("h-8")
     ago_label = ui.label().classes("h-8 text-l place-self-center")
-    ui.timer(1.0, lambda: ago_label.set_text(calc_time_passed()))
+    ui.timer(5.0, lambda: ago_label.set_text(calc_time_passed()))
 
     opts_row.classes("place-self-center w-[80vw]")
     
-week_column_chart = ui.chart({
+chart00 = ui.chart({
     "title": False,
     "chart": {
         "type": "column",
@@ -121,7 +125,7 @@ week_column_chart = ui.chart({
     "legend": {
         "enabled": False
     },
-    "series": requests.get(f"http://127.0.0.1:5000/last/column?n={n}").json()["series"],
+    "series": requests.get(f"http://127.0.0.1:5000/day/last_columns?n={n}").json()["series"],
     "colors": [
         "#7fbbb3",
         "#3f5865",
@@ -140,7 +144,7 @@ week_column_chart = ui.chart({
 }).classes("w-[80vw] h-48 rounded-md place-self-center")
 
 with ui.row() as chart_row0:
-    today_pie_chart = ui.chart({
+    chart10 = ui.chart({
         "title": False,
         "chart": {
             "type": "pie",
@@ -148,7 +152,7 @@ with ui.row() as chart_row0:
             "spacingTop": 24,
             "spacingBottom": 24
         },
-        "series": requests.get("http://127.0.0.1:5000/today/pie").json()["series"],
+        "series": requests.get("http://127.0.0.1:5000/day/pie").json()["series"],
         "colors": [
             "#7fbbb3",
             "#3f5865",
@@ -161,22 +165,33 @@ with ui.row() as chart_row0:
         "plotOptions": {
             "pie": {
                 "borderColor": None,
-                "size": "100%"
+                "size": "100%",
+                "innerSize": "70%",
+                "dataLabels": {
+                    "enabled": True,
+                    "distance": "-45%",
+                    "style": {
+                        "color": "#d3c6aa",
+                        "textOutline": None,
+                        "fontWeight": "500"
+                    }
+                }
             }
         }
     }).classes("w-[24vw] h-128 rounded-md")
 
-    today_heat_chart = ui.chart({
+    chart11 = ui.chart({
         "title": False,
         "chart": {
-            "type": "heatmap",
+            "type": "xrange",
             "backgroundColor": "#3a464c",
             "spacingTop": 24,
             "spacingBottom": 24
         },
         "xAxis": {
-            #"categories": ["0"+str(i)+":00" if len(str(i)) == 1 else str(i)+":00" for i in range(24)],
-            "categories": [f"{i//6}:{i%6}0" for i in range(24*6)],
+            "type": "datetime",
+            "minorGridLineColor": "#434f55",
+            "gridLineColor": "#4d5960",
             "lineColor": "#4d5960",
             "labels": {
                 "style": {
@@ -187,38 +202,30 @@ with ui.row() as chart_row0:
         "yAxis": {
             "categories": ["Study", "Hobby", "Social", "Media", "Leisure", "Waste", "Uncategorised"],
             "title": None,
+            "minorGridLineColor": "#434f55",
+            "gridLineColor": "#4d5960",
+            "lineColor": "#4d5960",
             "labels": {
                 "style": {
                     "color": "#d3c6aa"
                 }
             }
         },
-        "colorAxis": {
-            "stops": [
-                [0, "#333c43"],
-                [0.25, "#a7c080"],
-                [0.5, "#dbbc7f"],
-                [0.75, "#e69875"],
-                [1, "#e67e80"]
-            ],
-            "labels": {
-                "style": {
-                    "color": "#d3c6aa"
-                }
-            },
-            "min": 0,
-            "max": 1
+        "legend": {
+            "enabled": False
         },
+        
         "series": [{
-            "data": requests.get("http://127.0.0.1:5000/today/heat").json()["series"],
-            "interpolation": True
+            "data": requests.get("http://127.0.0.1:5000/day/timeline").json()["series"],
+            "borderRadius": 0,
+            "borderWidth": 0
             }]
     },
-    extras=["heatmap"]).classes("w-[55vw] h-128 rounded-md")
+    extras=["xrange"]).classes("w-[55vw] h-128 rounded-md")
 
     chart_row0.classes("place-self-center items-stretch")
 
-app.on_startup(update)
+app.on_connect(update)
 
 ui.run()
 

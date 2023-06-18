@@ -49,7 +49,7 @@ def grab_rows(
         f"SELECT * FROM {table} WHERE {db_time_column} BETWEEN '{start_timestamp}' AND '{end_timestamp}';")
     rows = cursor.fetchall()
     connection.close()
-    return rows
+    return [list(i) for i in rows]
 
 
 def create_table(table: str) -> None:
